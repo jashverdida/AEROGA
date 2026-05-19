@@ -79,6 +79,20 @@ export default function Login() {
               Create one
             </Link>
           </p>
+
+          <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Demo Credentials</p>
+            <div className="space-y-1.5 text-xs text-slate-400">
+              <div className="flex justify-between">
+                <span>Admin access</span>
+                <span className="font-mono text-aeroga-400">admin@email.com · any password</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Client access</span>
+                <span className="font-mono text-aeroga-400">client@email.com · any password</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
