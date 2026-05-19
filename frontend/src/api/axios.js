@@ -120,7 +120,7 @@ async function mockRequest(method, url, body) {
     if (body?.employeeId) {
       mockEmployees = mockEmployees.map((e) =>
         e.id === body.employeeId
-          ? { ...e, enrolledBenefits: [...new Set([...e.enrolledBenefits, id])] }
+          ? { ...e, enrolledBenefitIds: [...new Set([...(e.enrolledBenefitIds || []), id])] }
           : e
       );
     }
@@ -136,7 +136,7 @@ async function mockRequest(method, url, body) {
     );
     mockEmployees = mockEmployees.map((e) =>
       e.id === empId
-        ? { ...e, enrolledBenefits: e.enrolledBenefits.filter((bid) => bid !== benId) }
+        ? { ...e, enrolledBenefitIds: (e.enrolledBenefitIds || []).filter((bid) => bid !== benId) }
         : e
     );
     return ok({ message: 'Unenrolled successfully' });
@@ -157,22 +157,58 @@ async function mockRequest(method, url, body) {
   }
 
   // ── Employees ─────────────────────────────────────────────────────────────
-  if (method === 'GET' && u === '/api/employees') {
-    const page = parseInt(params.page || '0');
-    const size = parseInt(params.size || '10');
-    return paged(mockEmployees, page, size);
-  }
+  // Returns flat array (Employees.jsx does not paginate)
+  if (method === 'GET' && u === '/api/employees') return ok(mockEmployees);
 
   if (method === 'POST' && u === '/api/employees') {
     const emp = {
       id: `emp_${generateId()}`,
       ...body,
-      enrolledBenefits: [],
-      status: 'ACTIVE',
+      enrolledBenefitIds: [],
+      active: true,
       createdAt: new Date().toISOString(),
     };
     mockEmployees = [emp, ...mockEmployees];
     return ok(emp);
+  }
+
+  // GET /api/employees/{id}/benefits — returns benefit objects for enrolled IDs
+  if (/^\/api\/employees\/[^/]+\/benefits$/.test(u) && method === 'GET') {
+    const empId = u.split('/')[3];
+    const emp = mockEmployees.find((e) => e.id === empId);
+    const enrolled = mockBenefits.filter((b) => (emp?.enrolledBenefitIds || []).includes(b.id));
+    return ok(enrolled);
+  }
+
+  // POST /api/employees/{id}/enroll — enroll employee in a benefit
+  if (/^\/api\/employees\/[^/]+\/enroll$/.test(u) && method === 'POST') {
+    const empId = u.split('/')[3];
+    const { benefitId } = body || {};
+    mockEmployees = mockEmployees.map((e) =>
+      e.id === empId
+        ? { ...e, enrolledBenefitIds: [...new Set([...(e.enrolledBenefitIds || []), benefitId])] }
+        : e
+    );
+    mockBenefits = mockBenefits.map((b) =>
+      b.id === benefitId ? { ...b, enrolledCount: b.enrolledCount + 1 } : b
+    );
+    return ok({ message: 'Enrolled successfully' });
+  }
+
+  // DELETE /api/employees/{id}/benefits/{benefitId} — unenroll
+  if (/^\/api\/employees\/[^/]+\/benefits\/[^/]+$/.test(u) && method === 'DELETE') {
+    const parts = u.split('/');
+    const empId = parts[3];
+    const benId = parts[5];
+    mockEmployees = mockEmployees.map((e) =>
+      e.id === empId
+        ? { ...e, enrolledBenefitIds: (e.enrolledBenefitIds || []).filter((bid) => bid !== benId) }
+        : e
+    );
+    mockBenefits = mockBenefits.map((b) =>
+      b.id === benId ? { ...b, enrolledCount: Math.max(0, b.enrolledCount - 1) } : b
+    );
+    return ok({ message: 'Unenrolled successfully' });
   }
 
   const empMatch = u.match(/^\/api\/employees\/([^/]+)$/);

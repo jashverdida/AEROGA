@@ -91,15 +91,10 @@ export default function Landing() {
           className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99,102,241,0.15) 0%, transparent 70%)',
+              'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(34,197,94,0.12) 0%, transparent 70%)',
           }}
         />
         <div className="relative max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 bg-aeroga-950/60 border border-aeroga-800/50 rounded-full px-4 py-1.5 text-xs text-aeroga-300 mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-aeroga-400 animate-pulse" />
-            Built for the Benifex ecosystem
-          </div>
-
           <h1 className="text-5xl sm:text-6xl font-bold text-white leading-tight mb-6">
             The intelligent gateway<br />
             for your{' '}

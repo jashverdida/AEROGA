@@ -219,8 +219,9 @@ export let benefits = [
 ];
 
 // ── Employees ─────────────────────────────────────────────────────────────────
+// Field names match what Employees.jsx expects: name, email, department, position, active, enrolledBenefitIds
 const departments = ['Engineering', 'Product', 'Marketing', 'Sales', 'Finance', 'HR', 'Design'];
-const titles = [
+const positions = [
   'Senior Engineer', 'Product Manager', 'Marketing Lead', 'Account Executive',
   'Financial Analyst', 'HR Business Partner', 'UX Designer', 'Backend Developer',
   'Frontend Developer', 'Data Scientist', 'DevOps Engineer', 'QA Engineer',
@@ -233,18 +234,18 @@ const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', '
 export let employees = Array.from({ length: 40 }, (_, i) => {
   const firstName = firstNames[i % firstNames.length];
   const lastName = lastNames[i % lastNames.length];
+  const enrolledBenefitIds = benefits
+    .filter((_, bi) => (i + bi) % 3 === 0)
+    .map((b) => b.id);
   return {
     id: `emp_${pad(i + 1)}`,
-    firstName,
-    lastName,
+    name: `${firstName} ${lastName}`,
     email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@verpto.io`,
     department: departments[i % departments.length],
-    title: titles[i % titles.length],
+    position: positions[i % positions.length],
     employmentType: i % 5 === 0 ? 'PART_TIME' : 'FULL_TIME',
     startDate: daysAgo(30 + i * 15),
-    status: i % 12 === 0 ? 'INACTIVE' : 'ACTIVE',
-    enrolledBenefits: benefits
-      .filter((_, bi) => (i + bi) % 3 === 0)
-      .map((b) => b.id),
+    active: i % 12 !== 0,
+    enrolledBenefitIds,
   };
 });
