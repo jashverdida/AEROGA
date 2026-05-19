@@ -13,9 +13,9 @@ export default function ProtectedRoute({ children, requiredRole }) {
 
   if (requiredRole && user?.role !== requiredRole) {
     return (
-      <div className="flex h-screen">
+      <>
         <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="h-screen flex flex-col">
           <TopBar />
           <main className="flex-1 flex items-center justify-center">
             <div className="text-center">
@@ -25,19 +25,19 @@ export default function ProtectedRoute({ children, requiredRole }) {
             </div>
           </main>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="flex h-screen">
+    <>
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="h-screen flex flex-col overflow-hidden">
         <TopBar />
         <main className="flex-1 overflow-y-auto p-6">
           {children}
         </main>
       </div>
-    </div>
+    </>
   );
 }
