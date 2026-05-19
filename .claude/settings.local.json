@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where mongod *)",
+      "Read(//c/ProgramData/chocolatey/lib/**)",
+      "Read(//c/Program Files/MongoDB/**)",
+      "Read(//c/ProgramData/chocolatey/**)",
+      "Read(//c/Users/Jash/AppData/Local/Temp/chocolatey/**)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Initial commit: full-stack AEROGA — Spring Boot gateway + React dashboard *)"
+    ]
+  }
+}
