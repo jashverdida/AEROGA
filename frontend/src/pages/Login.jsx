@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Zap } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import Loader from '../components/ui/Loader';
 
@@ -31,9 +30,17 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="glass-card p-8">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-10 h-10 bg-aeroga-600 rounded-xl flex items-center justify-center mb-4">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src="/AEROGA.png"
+              alt="AEROGA"
+              style={{
+                width: '120px',
+                height: '120px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 0 16px rgba(74,222,128,0.8)) drop-shadow(0 0 36px rgba(34,197,94,0.4))',
+                marginBottom: '4px',
+              }}
+            />
             <h1 className="text-2xl font-bold text-white">Welcome back</h1>
             <p className="text-slate-400 text-sm mt-1">Sign in to your AEROGA account</p>
           </div>

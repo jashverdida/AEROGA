@@ -1,40 +1,33 @@
-import { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Key, ScrollText, Gift, Users, Zap } from 'lucide-react';
+import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, Key, ScrollText, Gift, Users } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
-// ── Layout constants (must match rendered heights exactly) ──────────────────
-const COMPACT_W = 60;
-const FULL_W     = 272;
-const LOGO_H     = 72;   // logo section height (set explicitly below)
-const SECT_H     = 32;   // "NAVIGATION" label row height
-const ITEM_H     = 44;   // each nav item row height
-const ADMIN_SEP  = 40;   // "ADMIN" separator row height
-const ORB_D      = 14;   // orb diameter  →  radius = 7
-const ORB_R      = 7;
+// ── Layout constants ─────────────────────────────────────────────────────────
+const COMPACT_W = 64;
+const FULL_W    = 276;
+const LOGO_H    = 72;   // logo section — set explicitly
+const ITEM_H    = 54;   // each nav row — set explicitly
+const ORB_D     = 30;   // orb diameter
+const ORB_R     = 15;   // orb radius
+const ICON_SZ   = 13;   // icon inside orb
+const L         = 5;    // orbX for left  items (center = 5+15 = 20)
+const R         = 29;   // orbX for right items (center = 29+15 = 44)
 
-// Alternating left / right orbX values produce the zig-zag
-const L = 10;   // left  orb x
-const R = 36;   // right orb x
-
-const generalNav = [
+// All nav items in one list — zigzag alternates L/R
+const allNav = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard',    orbX: L },
   { to: '/benefits',  icon: Gift,            label: 'Benefits',     orbX: R },
   { to: '/employees', icon: Users,           label: 'Employees',    orbX: L },
+  { to: '/api-keys',  icon: Key,             label: 'API Keys',     orbX: R, adminOnly: true },
+  { to: '/logs',      icon: ScrollText,      label: 'Request Logs', orbX: L, adminOnly: true },
 ];
 
-const adminNav = [
-  { to: '/api-keys',  icon: Key,             label: 'API Keys',     orbX: R },
-  { to: '/logs',      icon: ScrollText,      label: 'Request Logs', orbX: L },
-];
-
-// ── Orb centre-Y for SVG lines ──────────────────────────────────────────────
-const baseY   = LOGO_H + SECT_H;
-const genCY   = (i) => baseY + i * ITEM_H + ITEM_H / 2;         // general items
-const admCY   = (i) => baseY + generalNav.length * ITEM_H + ADMIN_SEP + i * ITEM_H + ITEM_H / 2; // admin items
+// Center-Y of item i
+const itemCY = (i) => LOGO_H + i * ITEM_H + ITEM_H / 2;
 
 // ── Single nav item ──────────────────────────────────────────────────────────
-function NavItem({ to, icon: Icon, label, orbX, expanded, onNavigate }) {
+function NavItem({ to, icon: Icon, label, orbX, expanded }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -42,7 +35,6 @@ function NavItem({ to, icon: Icon, label, orbX, expanded, onNavigate }) {
       to={to}
       className="relative block"
       style={{ height: `${ITEM_H}px` }}
-      onClick={onNavigate}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -61,44 +53,47 @@ function NavItem({ to, icon: Icon, label, orbX, expanded, onNavigate }) {
               transition: 'background 200ms ease',
             }}
           >
-            {/* Glowing orb */}
+            {/* ── Orb with icon inside ── */}
             <span
               style={{
                 width:  `${ORB_D}px`,
                 height: `${ORB_D}px`,
                 borderRadius: '50%',
                 flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 transition: 'all 300ms ease',
-                background: lit ? '#4ade80' : 'rgba(34,197,94,0.18)',
+                background: lit
+                  ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)'
+                  : 'rgba(34,197,94,0.12)',
                 boxShadow: isActive
-                  ? '0 0 10px #4ade80, 0 0 24px rgba(74,222,128,0.55), 0 0 48px rgba(74,222,128,0.2)'
+                  ? '0 0 12px #4ade80, 0 0 28px rgba(74,222,128,0.55), 0 0 52px rgba(74,222,128,0.2)'
                   : hovered
-                    ? '0 0 8px #4ade80, 0 0 18px rgba(74,222,128,0.38)'
-                    : 'none',
-                transform: lit ? 'scale(1.35)' : 'scale(1)',
+                    ? '0 0 9px #4ade80, 0 0 20px rgba(74,222,128,0.38)'
+                    : '0 0 0 1px rgba(34,197,94,0.2)',
+                transform: lit ? 'scale(1.1)' : 'scale(1)',
               }}
-            />
+            >
+              <Icon
+                style={{
+                  width:  `${ICON_SZ}px`,
+                  height: `${ICON_SZ}px`,
+                  flexShrink: 0,
+                  transition: 'all 250ms ease',
+                  // Black on bright orb, glowing green on dim orb
+                  color: lit ? '#000000' : '#22c55e',
+                  filter: lit
+                    ? 'none'
+                    : 'drop-shadow(0 0 3px rgba(34,197,94,0.7))',
+                }}
+              />
+            </span>
 
-            {/* Icon */}
-            <Icon
-              style={{
-                marginLeft: '14px',
-                width: '15px',
-                height: '15px',
-                flexShrink: 0,
-                color: lit ? '#4ade80' : '#475569',
-                filter: isActive ? 'drop-shadow(0 0 5px rgba(74,222,128,0.65))' : 'none',
-                opacity: expanded ? 1 : 0,
-                transition: expanded
-                  ? 'opacity 160ms ease 120ms, color 200ms ease, filter 200ms ease'
-                  : 'opacity 80ms ease, color 200ms ease',
-              }}
-            />
-
-            {/* Label */}
+            {/* ── Label (visible only when expanded) ── */}
             <span
               style={{
-                marginLeft: '9px',
+                marginLeft: '14px',
                 fontSize: '13.5px',
                 fontWeight: '500',
                 letterSpacing: '0.01em',
@@ -124,14 +119,21 @@ function NavItem({ to, icon: Icon, label, orbX, expanded, onNavigate }) {
   );
 }
 
-// ── Main sidebar ─────────────────────────────────────────────────────────────
+// ── Sidebar ──────────────────────────────────────────────────────────────────
 export default function Sidebar() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const location = useLocation();
   const isAdmin = user?.role === 'ADMIN';
 
-  useEffect(() => { setOpen(false); }, [location.pathname]);
+  const visibleNav = allNav.filter((item) => !item.adminOnly || isAdmin);
+
+  // Build SVG line segments connecting adjacent orb centres
+  const lines = visibleNav.slice(0, -1).map((item, i) => ({
+    x1: item.orbX + ORB_R,
+    y1: itemCY(i),
+    x2: visibleNav[i + 1].orbX + ORB_R,
+    y2: itemCY(i + 1),
+  }));
 
   return (
     <aside
@@ -140,11 +142,11 @@ export default function Sidebar() {
         width: open ? `${FULL_W}px` : `${COMPACT_W}px`,
         transition: 'width 320ms cubic-bezier(0.4, 0, 0.2, 1)',
         background: 'linear-gradient(165deg, #071912 0%, #040d09 52%, #071510 100%)',
-        WebkitMaskImage: `linear-gradient(to right, black 0%, black ${open ? '84%' : '88%'}, transparent 100%)`,
-        maskImage:       `linear-gradient(to right, black 0%, black ${open ? '84%' : '88%'}, transparent 100%)`,
+        WebkitMaskImage: `linear-gradient(to right, black 0%, black ${open ? '84%' : '90%'}, transparent 100%)`,
+        maskImage:       `linear-gradient(to right, black 0%, black ${open ? '84%' : '90%'}, transparent 100%)`,
         boxShadow: open
           ? '12px 0 48px rgba(0,0,0,0.65), 4px 0 16px rgba(34,197,94,0.06)'
-          : '4px 0 16px rgba(0,0,0,0.4)',
+          : '4px 0 20px rgba(0,0,0,0.45)',
       }}
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
@@ -158,68 +160,54 @@ export default function Sidebar() {
         }}
       />
 
-      {/* Aurora glows */}
-      <div className="absolute pointer-events-none" style={{ top: '-80px', left: '-50px', width: '224px', height: '224px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,0.22) 0%, transparent 70%)' }} />
-      <div className="absolute pointer-events-none" style={{ bottom: '-110px', right: '-44px', width: '288px', height: '288px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(21,128,61,0.16) 0%, transparent 70%)' }} />
+      {/* Aurora glow blobs */}
+      <div className="absolute pointer-events-none" style={{ top: '-80px', left: '-50px', width: '224px', height: '224px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,0.2) 0%, transparent 70%)' }} />
+      <div className="absolute pointer-events-none" style={{ bottom: '-110px', right: '-44px', width: '288px', height: '288px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(21,128,61,0.15) 0%, transparent 70%)' }} />
 
-      {/* ── SVG zig-zag connector lines ──────────────────────────────── */}
+      {/* ── SVG zigzag connector lines ── */}
       <svg
         className="absolute pointer-events-none"
         style={{ top: 0, left: 0, width: `${FULL_W}px`, height: '100%', overflow: 'visible', zIndex: 1 }}
         aria-hidden="true"
       >
         <defs>
-          <filter id="line-glow">
-            <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <filter id="lg">
+            <feGaussianBlur stdDeviation="1.8" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
         </defs>
-
-        {/* General nav: Dashboard→Benefits, Benefits→Employees */}
-        {generalNav.slice(0, -1).map((item, i) => (
+        {lines.map((ln, i) => (
           <line
-            key={`gen-${i}`}
-            x1={item.orbX + ORB_R}     y1={genCY(i)}
-            x2={generalNav[i + 1].orbX + ORB_R} y2={genCY(i + 1)}
-            stroke="rgba(74,222,128,0.38)"
+            key={i}
+            x1={ln.x1} y1={ln.y1}
+            x2={ln.x2} y2={ln.y2}
+            stroke="rgba(74,222,128,0.4)"
             strokeWidth="1.5"
             strokeLinecap="round"
-            filter="url(#line-glow)"
-          />
-        ))}
-
-        {/* Admin nav: API Keys→Request Logs */}
-        {isAdmin && adminNav.slice(0, -1).map((item, i) => (
-          <line
-            key={`adm-${i}`}
-            x1={item.orbX + ORB_R}    y1={admCY(i)}
-            x2={adminNav[i + 1].orbX + ORB_R} y2={admCY(i + 1)}
-            stroke="rgba(74,222,128,0.28)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            filter="url(#line-glow)"
+            filter="url(#lg)"
           />
         ))}
       </svg>
 
-      {/* ── Logo ─────────────────────────────────────────────────────── */}
+      {/* ── Logo ── */}
       <div
         className="relative border-b border-white/[0.06] flex items-center"
-        style={{ height: `${LOGO_H}px`, paddingLeft: '11px', flexShrink: 0, zIndex: 2 }}
+        style={{ height: `${LOGO_H}px`, paddingLeft: '12px', flexShrink: 0, zIndex: 2 }}
       >
-        <div
+        <img
+          src="/AEROGA.png"
+          alt="AEROGA"
           style={{
-            width: '38px', height: '38px', borderRadius: '11px', flexShrink: 0,
-            background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)',
-            boxShadow: '0 0 22px rgba(34,197,94,0.4)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '52px',
+            height: '52px',
+            objectFit: 'contain',
+            flexShrink: 0,
+            filter: 'drop-shadow(0 0 10px rgba(74,222,128,0.85)) drop-shadow(0 0 22px rgba(34,197,94,0.4))',
           }}
-        >
-          <Zap style={{ width: '20px', height: '20px', color: 'white' }} />
-        </div>
+        />
 
         <div
           style={{
@@ -234,45 +222,12 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* ── "NAVIGATION" label ───────────────────────────────────────── */}
-      <div
-        style={{ height: `${SECT_H}px`, paddingLeft: '14px', paddingTop: '14px', flexShrink: 0, position: 'relative', zIndex: 2 }}
-      >
-        <p style={{ fontSize: '9px', fontWeight: '700', color: '#3f5145', textTransform: 'uppercase', letterSpacing: '0.22em' }}>
-          Navigation
-        </p>
-      </div>
-
-      {/* ── General nav items ────────────────────────────────────────── */}
+      {/* ── Nav items (single continuous zigzag) ── */}
       <div style={{ position: 'relative', zIndex: 2, flexShrink: 0 }}>
-        {generalNav.map((item) => (
-          <NavItem key={item.to} {...item} expanded={open} onNavigate={() => setOpen(false)} />
+        {visibleNav.map((item) => (
+          <NavItem key={item.to} {...item} expanded={open}  />
         ))}
       </div>
-
-      {/* ── Admin section ────────────────────────────────────────────── */}
-      {isAdmin && (
-        <div style={{ position: 'relative', zIndex: 2, flexShrink: 0 }}>
-          {/* Admin separator row */}
-          <div
-            style={{
-              height: `${ADMIN_SEP}px`,
-              paddingLeft: '14px',
-              paddingTop: '16px',
-              borderTop: '1px solid rgba(255,255,255,0.04)',
-              marginTop: '2px',
-            }}
-          >
-            <p style={{ fontSize: '9px', fontWeight: '700', color: '#3f5145', textTransform: 'uppercase', letterSpacing: '0.22em' }}>
-              Admin
-            </p>
-          </div>
-
-          {adminNav.map((item) => (
-            <NavItem key={item.to} {...item} expanded={open} onNavigate={() => setOpen(false)} />
-          ))}
-        </div>
-      )}
     </aside>
   );
 }

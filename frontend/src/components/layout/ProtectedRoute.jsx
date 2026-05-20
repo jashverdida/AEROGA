@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children, requiredRole }) {
     return (
       <>
         <Sidebar />
-        <div className="h-screen flex flex-col">
+        <div className="h-screen flex flex-col" style={{ paddingLeft: '64px' }}>
           <TopBar />
           <main className="flex-1 flex items-center justify-center">
             <div className="text-center">
@@ -32,7 +32,7 @@ export default function ProtectedRoute({ children, requiredRole }) {
   return (
     <>
       <Sidebar />
-      <div className="h-screen flex flex-col overflow-hidden">
+      <div className="h-screen flex flex-col overflow-hidden" style={{ paddingLeft: '64px' }}>
         <TopBar />
         <main className="flex-1 overflow-y-auto p-6">
           {children}

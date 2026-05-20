@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, Key, Gauge, ScrollText, BookOpen, Gift, Zap, Github, ExternalLink, ChevronRight } from 'lucide-react';
+import {
+  Shield, Key, Gauge, ScrollText, BookOpen, Gift, Github, ExternalLink, ChevronRight,
+  Lightbulb, Palette, CheckCircle, Layers,
+  Server, Database, Lock, Code2,
+  Mail, Linkedin, Phone,
+} from 'lucide-react';
 
 const features = [
   {
@@ -54,6 +59,253 @@ const team = [
   },
 ];
 
+// ── Animated hexagon SVG ───────────────────────────────────────────────────
+function HexOutline({ size, opacity, strokeWidth = 1.2 }) {
+  const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+  const pts = Array.from({ length: 6 }, (_, i) => {
+    const a = (Math.PI / 180) * (60 * i - 30);
+    return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
+  }).join(' ');
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block' }}>
+      <polygon points={pts} fill="none" stroke={`rgba(74,222,128,${opacity})`} strokeWidth={strokeWidth} />
+    </svg>
+  );
+}
+
+// ── Single animated team card ───────────────────────────────────────────────
+const FLOAT_ANIMS = ['floatA', 'floatB', 'floatC', 'floatD'];
+
+function TeamCard({ photo, initials, name, title, description, icons, email, phone, linkedin }) {
+  const [hovered, setHovered] = useState(false);
+
+  const iconPositions = [
+    { top: '8px',  left:  '6%'  },
+    { top: '8px',  right: '6%'  },
+    { top: '44%',  left:  '-4%' },
+    { top: '44%',  right: '-4%' },
+  ];
+
+  return (
+    <div
+      style={{ position: 'relative', paddingTop: '140px', cursor: 'default', display: 'flex', flexDirection: 'column', height: '100%' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* ── Rotating hexagon rings ── */}
+      <div style={{
+        position: 'absolute', top: '-10px', left: '50%',
+        width: '220px', height: '220px',
+        animationName: hovered ? 'hexSpin' : 'none',
+        animationDuration: '12s',
+        animationTimingFunction: 'linear',
+        animationIterationCount: 'infinite',
+        opacity: hovered ? 1 : 0,
+        transition: 'opacity 400ms ease',
+        pointerEvents: 'none',
+        zIndex: 3,
+      }}>
+        <HexOutline size={220} opacity={0.45} strokeWidth={1.5} />
+      </div>
+      <div style={{
+        position: 'absolute', top: '14px', left: '50%',
+        width: '172px', height: '172px',
+        animationName: hovered ? 'hexSpinReverse' : 'none',
+        animationDuration: '18s',
+        animationTimingFunction: 'linear',
+        animationIterationCount: 'infinite',
+        opacity: hovered ? 1 : 0,
+        transition: 'opacity 500ms ease',
+        pointerEvents: 'none',
+        zIndex: 3,
+      }}>
+        <HexOutline size={172} opacity={0.25} strokeWidth={1} />
+      </div>
+
+      {/* ── Floating icons ── */}
+      {icons.map(({ Icon }, i) => (
+        <div key={i} style={{
+          position: 'absolute',
+          ...iconPositions[i],
+          zIndex: 4,
+          pointerEvents: 'none',
+          opacity: hovered ? 1 : 0,
+          transition: `opacity 300ms ease ${i * 60}ms`,
+          animationName: hovered ? FLOAT_ANIMS[i] : 'none',
+          animationDuration: `${3.2 + i * 0.4}s`,
+          animationTimingFunction: 'ease-in-out',
+          animationIterationCount: 'infinite',
+          animationDelay: `${i * 0.35}s`,
+        }}>
+          <div style={{
+            width: '38px', height: '38px',
+            background: 'rgba(7,25,18,0.85)',
+            border: '1px solid rgba(74,222,128,0.3)',
+            borderRadius: '10px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 14px rgba(74,222,128,0.25), 0 0 28px rgba(34,197,94,0.12)',
+          }}>
+            <Icon style={{ width: '17px', height: '17px', color: '#4ade80' }} />
+          </div>
+        </div>
+      ))}
+
+      {/* ── Photo ── */}
+      <img
+        src={photo}
+        alt={name}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: '50%',
+          transform: hovered
+            ? 'translateX(-50%) translateY(-22px) scale(1.08)'
+            : 'translateX(-50%) translateY(0px) scale(1)',
+          height: '190px',
+          width: 'auto',
+          objectFit: 'contain',
+          objectPosition: 'top',
+          transition: 'transform 420ms cubic-bezier(0.34,1.56,0.64,1), filter 400ms ease',
+          filter: hovered
+            ? 'drop-shadow(0 0 18px rgba(74,222,128,0.65)) drop-shadow(0 0 40px rgba(34,197,94,0.35))'
+            : 'drop-shadow(0 0 6px rgba(74,222,128,0.2))',
+          zIndex: 5,
+        }}
+      />
+
+      {/* ── Card body ── */}
+      <div style={{
+        background: 'rgba(8,18,11,0.85)',
+        border: hovered ? '1px solid rgba(74,222,128,0.28)' : '1px solid rgba(34,197,94,0.1)',
+        borderRadius: '18px',
+        backdropFilter: 'blur(12px)',
+        paddingTop: '80px',
+        paddingBottom: '24px',
+        paddingLeft: '24px',
+        paddingRight: '24px',
+        animationName: hovered ? 'cardGlow' : 'none',
+        animationDuration: '2.4s',
+        animationTimingFunction: 'ease-in-out',
+        animationIterationCount: 'infinite',
+        transition: 'border-color 400ms ease',
+        position: 'relative',
+        zIndex: 1,
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        {/* Avatar + name row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+          <div style={{
+            width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0,
+            background: 'linear-gradient(135deg, #22c55e 0%, #15803d 100%)',
+            boxShadow: hovered ? '0 0 18px rgba(34,197,94,0.5)' : '0 0 10px rgba(34,197,94,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '13px', fontWeight: 800, color: 'white',
+            transition: 'box-shadow 400ms ease',
+          }}>
+            {initials}
+          </div>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: '15px', color: 'white', lineHeight: 1.2 }}>{name}</p>
+            <p style={{
+              fontSize: '11.5px', fontWeight: 600, color: '#4ade80', marginTop: '3px',
+              textShadow: hovered ? '0 0 12px rgba(74,222,128,0.6)' : 'none',
+              transition: 'text-shadow 400ms ease',
+            }}>{title}</p>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.65 }}>{description}</p>
+
+        {/* ── Contact section ── */}
+        <div style={{ marginTop: 'auto', paddingTop: '18px' }}>
+          {/* Pill action buttons */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            {email && (
+              <a
+                href={`mailto:${email}`}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '7px 14px', borderRadius: '999px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  fontSize: '12px', fontWeight: 600, color: '#cbd5e1',
+                  textDecoration: 'none', transition: 'all 200ms ease',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(74,222,128,0.5)'; e.currentTarget.style.color = '#4ade80'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = '#cbd5e1'; }}
+              >
+                <Mail style={{ width: '12px', height: '12px', flexShrink: 0 }} />
+                Email
+              </a>
+            )}
+            {linkedin && (
+              <a
+                href={linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '7px 14px', borderRadius: '999px',
+                  background: 'rgba(74,222,128,0.15)',
+                  border: '1px solid rgba(74,222,128,0.35)',
+                  fontSize: '12px', fontWeight: 600, color: '#4ade80',
+                  textDecoration: 'none', transition: 'all 200ms ease',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(74,222,128,0.25)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(74,222,128,0.15)'; }}
+              >
+                <Linkedin style={{ width: '12px', height: '12px', flexShrink: 0 }} />
+                LinkedIn
+              </a>
+            )}
+          </div>
+
+          {/* Contact detail rows */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {[
+              email    && { href: `mailto:${email}`,    Icon: Mail,     label: email,                   external: false },
+              phone    && { href: `tel:${phone}`,        Icon: Phone,    label: phone,                   external: false },
+              linkedin && { href: linkedin,              Icon: Linkedin, label: name,                    external: true  },
+            ].filter(Boolean).map(({ href, Icon, label, external }, i) => (
+              <a
+                key={i}
+                href={href}
+                {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '10px 0',
+                  borderTop: '1px solid rgba(255,255,255,0.06)',
+                  textDecoration: 'none',
+                  color: '#4ade80',
+                  fontSize: '12.5px',
+                  transition: 'color 200ms ease',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#86efac'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#4ade80'; }}
+              >
+                <span style={{
+                  width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
+                  background: 'rgba(74,222,128,0.1)',
+                  border: '1px solid rgba(74,222,128,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon style={{ width: '13px', height: '13px', color: '#4ade80' }} />
+                </span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -72,10 +324,15 @@ export default function Landing() {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-aeroga-600 rounded-lg flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+          <div className="flex items-center gap-2">
+            <img
+              src="/AEROGA.png"
+              alt="AEROGA"
+              style={{
+                width: '44px', height: '44px', objectFit: 'contain', flexShrink: 0,
+                filter: 'drop-shadow(0 0 10px rgba(74,222,128,0.8)) drop-shadow(0 0 22px rgba(34,197,94,0.35))',
+              }}
+            />
             <span className="text-white font-bold text-lg tracking-tight">AEROGA</span>
           </div>
           <div className="flex items-center gap-3">
@@ -226,25 +483,43 @@ export default function Landing() {
       {/* Team */}
       <section className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-14">
+          <div className="text-center mb-20">
             <h2 className="text-3xl font-bold text-white mb-3">Built by VERPTO</h2>
             <p className="text-slate-400">Two engineers. One gateway. Zero compromises.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {team.map(({ initials, name, title: memberTitle, description }) => (
-              <div key={name} className="glass-card p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-aeroga-700 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                    {initials}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">{name}</p>
-                    <p className="text-xs text-aeroga-400 font-medium">{memberTitle}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-slate-400 leading-relaxed">{description}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <TeamCard
+              photo="/jash.png"
+              initials="JV"
+              name="Jashmine Verdida"
+              title="Lead QA & Frontend Engineer"
+              description="Responsible for every pixel of the dashboard, component architecture, and making sure AEROGA works as beautifully as it looks."
+              icons={[
+                { Icon: Lightbulb },
+                { Icon: Palette },
+                { Icon: Layers },
+                { Icon: CheckCircle },
+              ]}
+              email="JashmineVerdida08@gmail.com"
+              phone="0956 950 5102"
+              linkedin="https://www.linkedin.com/in/jashmine-verdida-820a56352/"
+            />
+            <TeamCard
+              photo="/eijay.png"
+              initials="EP"
+              name="Eijay Pepito"
+              title="Backend Engineer"
+              description="Designed the API gateway engine, rate limiter, auth system, and every MongoDB query that powers AEROGA's core."
+              icons={[
+                { Icon: Server },
+                { Icon: Database },
+                { Icon: Lock },
+                { Icon: Code2 },
+              ]}
+              email="eijay.pepito8@gmail.com"
+              phone="0993 266 2346"
+              linkedin="https://www.linkedin.com/in/eijay-pepito-98b538355/"
+            />
           </div>
         </div>
       </section>
@@ -253,9 +528,14 @@ export default function Landing() {
       <footer className="border-t border-slate-800 py-8 px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-aeroga-600 rounded flex items-center justify-center">
-              <Zap className="w-3 h-3 text-white" />
-            </div>
+            <img
+              src="/AEROGA.png"
+              alt="AEROGA"
+              style={{
+                width: '34px', height: '34px', objectFit: 'contain', flexShrink: 0,
+                filter: 'drop-shadow(0 0 8px rgba(74,222,128,0.7))',
+              }}
+            />
             <span className="text-white font-bold text-sm">AEROGA</span>
           </div>
           <p className="text-sm text-slate-500">© 2025 VERPTO. All rights reserved.</p>

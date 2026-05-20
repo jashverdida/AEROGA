@@ -1,12 +1,48 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Eye, Search } from 'lucide-react';
 import API from '../api/axios';
 import { useAuth } from '../hooks/useAuth';
 import Modal from '../components/ui/Modal';
-import Badge from '../components/ui/Badge';
 import Loader from '../components/ui/Loader';
 
 const emptyForm = { name: '', email: '', department: '', position: '' };
+
+const DEPT_COLORS = {
+  Engineering: { color: '#4ade80', bg: 'rgba(74,222,128,0.09)',  border: 'rgba(74,222,128,0.2)' },
+  Product:     { color: '#38bdf8', bg: 'rgba(56,189,248,0.09)',  border: 'rgba(56,189,248,0.2)' },
+  Marketing:   { color: '#fb923c', bg: 'rgba(251,146,60,0.09)',  border: 'rgba(251,146,60,0.2)' },
+  Sales:       { color: '#a78bfa', bg: 'rgba(167,139,250,0.09)', border: 'rgba(167,139,250,0.2)' },
+  Finance:     { color: '#fbbf24', bg: 'rgba(251,191,36,0.09)',  border: 'rgba(251,191,36,0.2)' },
+  HR:          { color: '#f472b6', bg: 'rgba(244,114,182,0.09)', border: 'rgba(244,114,182,0.2)' },
+  Design:      { color: '#fb923c', bg: 'rgba(251,146,60,0.09)',  border: 'rgba(251,146,60,0.2)' },
+};
+
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(' ');
+  return parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}
+
+const AVATAR_PALETTES = [
+  ['#22c55e', '#15803d'], ['#3b82f6', '#1d4ed8'], ['#a855f7', '#7c3aed'],
+  ['#f59e0b', '#d97706'], ['#ef4444', '#b91c1c'], ['#06b6d4', '#0e7490'],
+  ['#f97316', '#c2410c'], ['#ec4899', '#be185d'],
+];
+
+function avatarGradient(name) {
+  const idx = (name?.charCodeAt(0) ?? 0) % AVATAR_PALETTES.length;
+  const [a, b] = AVATAR_PALETTES[idx];
+  return `linear-gradient(135deg, ${a} 0%, ${b} 100%)`;
+}
+
+const CARD_STYLE = {
+  background: 'rgba(10,20,12,0.75)',
+  border: '1px solid rgba(34,197,94,0.08)',
+  borderRadius: '14px',
+  backdropFilter: 'blur(8px)',
+};
 
 export default function Employees() {
   const { user } = useAuth();
@@ -84,7 +120,7 @@ export default function Employees() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Deactivate this employee?')) return;
+    if (!window.confirm('Remove this employee?')) return;
     await API.delete(`/api/employees/${id}`);
     fetchAll();
   };
@@ -107,93 +143,201 @@ export default function Employees() {
     fetchAll();
   };
 
-  const getBenefitName = (id) => benefits.find((b) => b.id === id)?.name ?? id;
-
   const filtered = employees.filter(
     (e) =>
       e.name?.toLowerCase().includes(search.toLowerCase()) ||
-      e.email?.toLowerCase().includes(search.toLowerCase())
+      e.email?.toLowerCase().includes(search.toLowerCase()) ||
+      e.department?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const activeCount = employees.filter((e) => e.active).length;
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-3">
-        <input
-          className="input-field max-w-xs text-sm"
-          placeholder="Search by name or email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {isAdmin && (
-          <button className="btn-primary flex items-center gap-2 text-sm ml-auto" onClick={openCreate}>
-            <Plus className="w-4 h-4" /> Add Employee
-          </button>
-        )}
+      {/* Header bar */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap',
+        background: 'rgba(10,20,12,0.6)',
+        border: '1px solid rgba(34,197,94,0.08)',
+        borderRadius: '12px',
+        padding: '14px 20px',
+        backdropFilter: 'blur(8px)',
+      }}>
+        <div>
+          <p style={{ fontSize: '22px', fontWeight: 800, color: 'white', letterSpacing: '-0.03em' }}>{employees.length}</p>
+          <p style={{ fontSize: '11.5px', color: '#64748b', fontWeight: 500 }}>Total employees</p>
+        </div>
+        <div style={{ width: '1px', height: '36px', background: 'rgba(255,255,255,0.07)' }} />
+        <div>
+          <p style={{ fontSize: '22px', fontWeight: 800, color: '#4ade80', letterSpacing: '-0.03em' }}>{activeCount}</p>
+          <p style={{ fontSize: '11.5px', color: '#64748b', fontWeight: 500 }}>Active</p>
+        </div>
+        <div style={{ width: '1px', height: '36px', background: 'rgba(255,255,255,0.07)' }} />
+        <div>
+          <p style={{ fontSize: '22px', fontWeight: 800, color: '#f87171', letterSpacing: '-0.03em' }}>{employees.length - activeCount}</p>
+          <p style={{ fontSize: '11.5px', color: '#64748b', fontWeight: 500 }}>Inactive</p>
+        </div>
+
+        {/* Search + action */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ position: 'relative' }}>
+            <Search style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', width: '14px', height: '14px', color: '#475569', pointerEvents: 'none' }} />
+            <input
+              style={{
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '8px', padding: '8px 12px 8px 32px',
+                color: '#e2e8f0', fontSize: '13px', outline: 'none', width: '220px',
+              }}
+              placeholder="Search name, email, dept…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {isAdmin && (
+            <button className="btn-primary flex items-center gap-2 text-sm" onClick={openCreate}>
+              <Plus className="w-4 h-4" /> Add Employee
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="glass-card overflow-hidden">
+      <div style={{ ...CARD_STYLE, overflow: 'hidden' }}>
         {loading ? (
-          <div className="py-12"><Loader className="py-4" /></div>
+          <div style={{ padding: '52px', display: 'flex', justifyContent: 'center' }}><Loader /></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700/50">
-                  {['Name', 'Email', 'Department', 'Position', 'Benefits', 'Status', 'Actions'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  {['Employee', 'Department', 'Position', 'Benefits', 'Status', ...(isAdmin ? ['Actions'] : [])].map((h) => (
+                    <th key={h} style={{
+                      padding: '11px 16px', textAlign: 'left', fontSize: '10.5px',
+                      fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.07em',
+                    }}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/40">
+              <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-slate-500 text-sm">
+                    <td colSpan={isAdmin ? 6 : 5} style={{ padding: '48px', textAlign: 'center', color: '#475569', fontSize: '13px' }}>
                       No employees found.
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((emp) => (
-                    <tr key={emp.id} className="hover:bg-slate-800/20 transition-colors">
-                      <td className="px-4 py-3 text-sm font-medium text-white">{emp.name}</td>
-                      <td className="px-4 py-3 text-sm text-slate-300">{emp.email}</td>
-                      <td className="px-4 py-3 text-sm text-slate-300">{emp.department}</td>
-                      <td className="px-4 py-3 text-sm text-slate-400">{emp.position}</td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => openView(emp)}
-                          className="flex items-center gap-1.5 text-xs text-aeroga-400 hover:text-aeroga-300 transition-colors"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          {emp.enrolledBenefitIds?.length ?? 0} enrolled
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Badge variant={emp.active ? 'green' : 'slate'}>{emp.active ? 'Active' : 'Inactive'}</Badge>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {isAdmin && (
-                            <>
-                              <button onClick={() => openEdit(emp)} className="text-slate-500 hover:text-aeroga-400 transition-colors p-1">
-                                <Pencil className="w-4 h-4" />
+                  filtered.map((emp, idx) => {
+                    const deptCs = DEPT_COLORS[emp.department] ?? DEPT_COLORS.Engineering;
+                    return (
+                      <tr
+                        key={emp.id}
+                        style={{
+                          borderBottom: idx < filtered.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                          transition: 'background 150ms',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(34,197,94,0.025)'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                      >
+                        {/* Employee name + avatar */}
+                        <td style={{ padding: '10px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div style={{
+                              width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
+                              background: avatarGradient(emp.name),
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: '11px', fontWeight: 700, color: 'white',
+                            }}>
+                              {getInitials(emp.name)}
+                            </div>
+                            <div>
+                              <p style={{ fontSize: '13px', fontWeight: 600, color: 'white', lineHeight: 1.2 }}>{emp.name}</p>
+                              <p style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>{emp.email}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Department chip */}
+                        <td style={{ padding: '10px 16px' }}>
+                          <span style={{
+                            display: 'inline-block',
+                            fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '20px',
+                            color: deptCs.color, background: deptCs.bg, border: `1px solid ${deptCs.border}`,
+                          }}>
+                            {emp.department}
+                          </span>
+                        </td>
+
+                        <td style={{ padding: '10px 16px', fontSize: '12.5px', color: '#94a3b8' }}>{emp.position}</td>
+
+                        {/* Enrolled benefits */}
+                        <td style={{ padding: '10px 16px' }}>
+                          <button
+                            onClick={() => openView(emp)}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '5px',
+                              fontSize: '12px', fontWeight: 600,
+                              color: '#4ade80', cursor: 'pointer', background: 'none', border: 'none',
+                              transition: 'color 150ms',
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = '#86efac'; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = '#4ade80'; }}
+                          >
+                            <Eye style={{ width: '13px', height: '13px' }} />
+                            {emp.enrolledBenefitIds?.length ?? 0} enrolled
+                          </button>
+                        </td>
+
+                        {/* Status */}
+                        <td style={{ padding: '10px 16px' }}>
+                          <span style={{
+                            fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '20px',
+                            color: emp.active ? '#4ade80' : '#64748b',
+                            background: emp.active ? 'rgba(74,222,128,0.08)' : 'rgba(100,116,139,0.08)',
+                            border: `1px solid ${emp.active ? 'rgba(74,222,128,0.2)' : 'rgba(100,116,139,0.15)'}`,
+                          }}>
+                            {emp.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+
+                        {/* Admin actions */}
+                        {isAdmin && (
+                          <td style={{ padding: '10px 16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <button
+                                onClick={() => openEdit(emp)}
+                                style={{ color: '#475569', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px', transition: 'color 150ms' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.color = '#4ade80'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.color = '#475569'; }}
+                              >
+                                <Pencil style={{ width: '14px', height: '14px' }} />
                               </button>
                               <button
                                 onClick={() => { setEnrollTarget(emp); setSelectedBenefitId(''); setError(''); }}
-                                className="text-xs text-aeroga-400 hover:text-aeroga-300 transition-colors px-2 py-0.5 border border-aeroga-700 rounded"
+                                style={{
+                                  fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '6px',
+                                  color: '#4ade80', background: 'rgba(74,222,128,0.07)',
+                                  border: '1px solid rgba(74,222,128,0.2)', cursor: 'pointer', transition: 'all 150ms',
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(74,222,128,0.12)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(74,222,128,0.07)'; }}
                               >
                                 Enroll
                               </button>
-                              <button onClick={() => handleDelete(emp.id)} className="text-slate-500 hover:text-red-400 transition-colors p-1">
-                                <Trash2 className="w-4 h-4" />
+                              <button
+                                onClick={() => handleDelete(emp.id)}
+                                style={{ color: '#475569', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px', transition: 'color 150ms' }}
+                                onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.color = '#475569'; }}
+                              >
+                                <Trash2 style={{ width: '14px', height: '14px' }} />
                               </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -204,12 +348,17 @@ export default function Employees() {
       {/* Create / Edit Modal */}
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editTarget ? 'Edit Employee' : 'Add Employee'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {['name', 'email', 'department', 'position'].map((field) => (
+          {[
+            { field: 'name', label: 'Full Name', type: 'text' },
+            { field: 'email', label: 'Email', type: 'email' },
+            { field: 'department', label: 'Department', type: 'text' },
+            { field: 'position', label: 'Position / Title', type: 'text' },
+          ].map(({ field, label, type }) => (
             <div key={field}>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5 capitalize">{field}</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">{label}</label>
               <input
                 className="input-field"
-                type={field === 'email' ? 'email' : 'text'}
+                type={type}
                 value={form[field]}
                 onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
                 required
@@ -260,22 +409,34 @@ export default function Employees() {
           {enrolledBenefits.length === 0 ? (
             <p className="text-slate-400 text-sm text-center py-4">No benefits enrolled.</p>
           ) : (
-            enrolledBenefits.map((benefit) => (
-              <div key={benefit.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-white">{benefit.name}</p>
-                  <p className="text-xs text-slate-400">{benefit.type}</p>
+            enrolledBenefits.map((benefit) => {
+              const cs = { HEALTH: '#4ade80', TRANSPORT: '#38bdf8', FINANCIAL: '#a78bfa', LIFESTYLE: '#fb923c', EDUCATION: '#fbbf24' };
+              return (
+                <div key={benefit.id} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: '10px', padding: '12px 14px',
+                }}>
+                  <div>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: 'white' }}>{benefit.name}</p>
+                    <p style={{ fontSize: '11px', color: cs[benefit.category] ?? '#64748b', marginTop: '2px', fontWeight: 600 }}>
+                      {benefit.category}
+                    </p>
+                  </div>
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleUnenroll(viewTarget.id, benefit.id)}
+                      style={{ color: '#475569', background: 'none', border: 'none', cursor: 'pointer', padding: '4px', transition: 'color 150ms' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#f87171'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = '#475569'; }}
+                    >
+                      <X style={{ width: '15px', height: '15px' }} />
+                    </button>
+                  )}
                 </div>
-                {isAdmin && (
-                  <button
-                    onClick={() => handleUnenroll(viewTarget.id, benefit.id)}
-                    className="text-slate-500 hover:text-red-400 transition-colors p-1"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            ))
+              );
+            })
           )}
           <button onClick={() => setViewTarget(null)} className="btn-ghost w-full mt-2">Close</button>
         </div>

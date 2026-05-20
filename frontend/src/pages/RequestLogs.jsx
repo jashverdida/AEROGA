@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Activity } from 'lucide-react';
 import API from '../api/axios';
 import Badge, { methodBadge, statusBadge } from '../components/ui/Badge';
 import Loader from '../components/ui/Loader';
@@ -9,8 +9,36 @@ const STATUS_OPTIONS = ['ALL', '2xx', '4xx', '5xx'];
 
 function formatTs(ts) {
   if (!ts) return '—';
-  return new Date(ts).toLocaleString();
+  return new Date(ts).toLocaleString([], {
+    month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  });
 }
+
+const SELECT_STYLE = {
+  background: 'rgba(7,25,18,0.9)',
+  border: '1px solid rgba(34,197,94,0.12)',
+  borderRadius: '8px',
+  color: '#e2e8f0',
+  fontSize: '13px',
+  fontWeight: 500,
+  padding: '8px 32px 8px 12px',
+  cursor: 'pointer',
+  outline: 'none',
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 10px center',
+  minWidth: '110px',
+};
+
+const CARD_STYLE = {
+  background: 'rgba(10,20,12,0.75)',
+  border: '1px solid rgba(34,197,94,0.08)',
+  borderRadius: '14px',
+  backdropFilter: 'blur(8px)',
+};
 
 export default function RequestLogs() {
   const [logs, setLogs] = useState([]);
@@ -25,7 +53,7 @@ export default function RequestLogs() {
   const fetchLogs = async (p = page) => {
     setLoading(true);
     try {
-      const res = await API.get(`/api/admin/logs?page=${p}&size=10`);
+      const res = await API.get(`/api/admin/logs?page=${p}&size=15`);
       const data = res.data.data;
       setLogs(data?.content ?? []);
       setTotalPages(data?.totalPages ?? 0);
@@ -34,9 +62,7 @@ export default function RequestLogs() {
     }
   };
 
-  useEffect(() => {
-    fetchLogs(page);
-  }, [page]);
+  useEffect(() => { fetchLogs(page); }, [page]);
 
   useEffect(() => {
     if (autoRefresh) {
@@ -59,80 +85,105 @@ export default function RequestLogs() {
 
   return (
     <div className="space-y-5">
-      {/* Filters */}
-      <div className="glass-card p-4 flex flex-wrap gap-3 items-center">
-        <select
-          className="input-field w-auto text-sm"
-          value={method}
-          onChange={(e) => setMethod(e.target.value)}
-        >
-          {METHOD_OPTIONS.map((m) => <option key={m}>{m}</option>)}
+      {/* Filter bar */}
+      <div style={{ ...CARD_STYLE, padding: '14px 18px', display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Activity style={{ width: '14px', height: '14px', color: '#4ade80' }} />
+          <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>Filter:</span>
+        </div>
+        <select style={SELECT_STYLE} value={method} onChange={(e) => setMethod(e.target.value)}>
+          {METHOD_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
         </select>
-        <select
-          className="input-field w-auto text-sm"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
-          {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+        <select style={SELECT_STYLE} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <div className="ml-auto flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer">
+
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '12.5px', color: '#64748b', cursor: 'pointer', userSelect: 'none' }}>
             <input
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="accent-aeroga-500"
+              style={{ accentColor: '#22c55e', width: '14px', height: '14px' }}
             />
-            Auto-refresh (30s)
+            Auto-refresh 30s
           </label>
           <button
             onClick={() => fetchLogs(page)}
-            className="btn-ghost flex items-center gap-2 text-sm px-3 py-1.5"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              fontSize: '12.5px', fontWeight: 600, color: '#94a3b8',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '8px', padding: '6px 12px', cursor: 'pointer',
+              transition: 'all 150ms',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'white'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = '#94a3b8'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            <RefreshCw style={{ width: '13px', height: '13px' }} />
+            Refresh
           </button>
         </div>
       </div>
 
-      <div className="glass-card overflow-hidden">
+      <div style={{ ...CARD_STYLE, overflow: 'hidden' }}>
         {loading ? (
-          <div className="py-12"><Loader className="py-4" /></div>
+          <div style={{ padding: '52px', display: 'flex', justifyContent: 'center' }}><Loader /></div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700/50">
-                  {['Method', 'Path', 'Status', 'Latency', 'API Key', 'User', 'IP', 'Timestamp'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  {['Method', 'Path', 'Status', 'Response Time', 'API Key', 'IP Address', 'Timestamp'].map((h) => (
+                    <th key={h} style={{
+                      padding: '11px 16px', textAlign: 'left', fontSize: '10.5px',
+                      fontWeight: 600, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.07em',
+                    }}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/40">
+              <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-10 text-center text-slate-500 text-sm">
+                    <td colSpan={7} style={{ padding: '48px', textAlign: 'center', color: '#475569', fontSize: '13px' }}>
                       No logs match the current filters.
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-800/20 transition-colors">
-                      <td className="px-4 py-3">
+                  filtered.map((log, idx) => (
+                    <tr
+                      key={log.id}
+                      style={{
+                        borderBottom: idx < filtered.length - 1 ? '1px solid rgba(255,255,255,0.03)' : 'none',
+                        transition: 'background 150ms',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(34,197,94,0.028)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                    >
+                      <td style={{ padding: '10px 16px' }}>
                         <Badge variant={methodBadge(log.method)}>{log.method}</Badge>
                       </td>
-                      <td className="px-4 py-3 text-xs font-mono text-slate-300 max-w-[180px] truncate">{log.path}</td>
-                      <td className="px-4 py-3">
+                      <td style={{ padding: '10px 16px', fontSize: '11.5px', fontFamily: 'monospace', color: '#94a3b8', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {log.path}
+                      </td>
+                      <td style={{ padding: '10px 16px' }}>
                         <Badge variant={statusBadge(log.statusCode)}>{log.statusCode}</Badge>
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-400">{log.latencyMs}ms</td>
-                      <td className="px-4 py-3 text-xs font-mono text-slate-500 max-w-[100px] truncate">
-                        {log.apiKeyId ?? '—'}
+                      <td style={{ padding: '10px 16px', fontSize: '12px', fontWeight: 600, color: log.responseTime > 200 ? '#f59e0b' : '#4ade80' }}>
+                        {log.responseTime}ms
                       </td>
-                      <td className="px-4 py-3 text-xs text-slate-500 max-w-[120px] truncate">{log.userId ?? '—'}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500">{log.ipAddress}</td>
-                      <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{formatTs(log.timestamp)}</td>
+                      <td style={{ padding: '10px 16px', fontSize: '11px', fontFamily: 'monospace', color: '#475569', maxWidth: '110px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {log.apiKey ?? '—'}
+                      </td>
+                      <td style={{ padding: '10px 16px', fontSize: '11.5px', fontFamily: 'monospace', color: '#64748b' }}>
+                        {log.ipAddress}
+                      </td>
+                      <td style={{ padding: '10px 16px', fontSize: '11px', color: '#475569', whiteSpace: 'nowrap' }}>
+                        {formatTs(log.timestamp)}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -141,13 +192,14 @@ export default function RequestLogs() {
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-slate-700/50 flex items-center justify-between">
-            <p className="text-xs text-slate-500">
-              Page {page + 1} of {totalPages}
-            </p>
-            <div className="flex gap-2">
+          <div style={{
+            padding: '12px 18px',
+            borderTop: '1px solid rgba(255,255,255,0.04)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <p style={{ fontSize: '12px', color: '#475569' }}>Page {page + 1} of {totalPages}</p>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}

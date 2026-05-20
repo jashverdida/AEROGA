@@ -105,6 +105,8 @@ export const analyticsSummary = {
   activeApiKeys: 4,
   averageResponseTime: 87,
   errorRate: 2.4,
+  totalBenefits: 7,
+  totalEmployees: 40,
   totalRequestsChange: 12.5,
   activeApiKeysChange: 0,
   averageResponseTimeChange: -5.1,
